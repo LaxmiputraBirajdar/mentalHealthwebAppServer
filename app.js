@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
     {
       testDate: { type: Date, default: Date.now },
       testScore: { type: Number },
-      testResult: { type: String },
+      testResult: { },
     }
   ],
 });
@@ -52,7 +52,7 @@ const Tool = mongoose.model('Tool', toolSchema);
 
 app.use(cors());
 app.use(express.json());
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
 
 
 
@@ -144,13 +144,15 @@ app.post('/login', async (req, res) => {
 // Tools routes
 const router = express.Router(); // Added router definition
 
-router.get('/:toolId/questions', async (req, res) => {
+router.get('/:toolName/questions', async (req, res) => {
   try {
-    const toolId = req.params.toolId;
-    const tool = await Tool.findById(toolId).populate('questions');
+    const toolName = req.params.toolName;
+    const tool = await Tool.findOne({ name: toolName }).populate('questions');
+    
     if (!tool) {
       return res.status(404).json({ message: 'Tool not found' });
     }
+    
     res.json(tool.questions);
   } catch (error) {
     console.error(error);
@@ -159,18 +161,20 @@ router.get('/:toolId/questions', async (req, res) => {
 });
 
 
-router.post('/:toolId/submit', authenticateJwt, async (req, res) => {
+router.post('/:toolName/submit', authenticateJwt, async (req, res) => {
   try {
-    const toolId = req.params.toolId;
+    const toolName = req.params.toolName; // Change parameter name to toolName
     const answers = req.body;
+    console.log(answers);
+    // const answersArray = req.body;
 
     // Validate input
     if (!Array.isArray(answers)) {
       return res.status(400).json({ error: 'Invalid answers format' });
     }
 
-    // Fetch the tool to get the list of questions
-    const tool = await Tool.findById(toolId).populate('questions');
+    // Fetch the tool using the name to get the list of questions
+    const tool = await Tool.findOne({ name: toolName }).populate('questions'); // Change to findOne with name
     if (!tool) {
       return res.status(404).json({ message: 'Tool not found' });
     }
@@ -218,12 +222,13 @@ router.post('/:toolId/submit', authenticateJwt, async (req, res) => {
       $push: {
         testResults: {
           testDate: new Date(),
-          testScore: totalScore,
+          testScore: totalScore, // Use totalScore directly as it's already a number
           testResult: result,
         },
       },
     });
 
+    // Return the response
     // Return the response
     const response = {
       message: 'Assessment completed successfully',
@@ -238,10 +243,11 @@ router.post('/:toolId/submit', authenticateJwt, async (req, res) => {
   }
 });
 
-
 // Insert a new tool
 // Insert a new tool with questions
-router.post('/insert/tool', async (req, res) => {
+router.post('/insert', async (req, res) => {
+
+  console.log(req.body);
   try {
     const { name, questions } = req.body;
 
@@ -265,27 +271,7 @@ router.post('/insert/tool', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-
-// Insert a new question
-router.post('/insert/question', async (req, res) => {
-  try {
-    const { text } = req.body;
-
-    // Create a new question
-    const newQuestion = new Question({
-      text,
-    });
-
-    // Save the question to the database
-    await newQuestion.save();
-
-    res.json({ message: 'Question inserted successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+;
 
 // Mount the router for tools
 app.use('/tools', router);
@@ -294,7 +280,8 @@ app.get('/', (req, res) => {
   res.send('Hello, welcome to Web app for Mental Health Assessment. This is the Home page.');
 });
 
-const port = 3000;
+
+const port = 3001;
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
