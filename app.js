@@ -205,15 +205,15 @@ router.post('/:toolName/submit', authenticateJwt, async (req, res) => {
     // Determine the result based on the total score
     let result;
     if (totalScore >= 1 && totalScore <= 4) {
-      result = 'Minimal depression';
+      result = 'Minimal ';
     } else if (totalScore >= 5 && totalScore <= 9) {
-      result = 'Mild depression';
+      result = 'Mild ';
     } else if (totalScore >= 10 && totalScore <= 14) {
-      result = 'Moderate depression';
+      result = 'Moderate ';
     } else if (totalScore >= 15 && totalScore <= 19) {
-      result = 'Moderately severe depression';
+      result = 'Moderately severe ';
     } else {
-      result = 'Severe depression';
+      result = 'Severe ';
     }
 
     // Update the user's testResults array in the database
